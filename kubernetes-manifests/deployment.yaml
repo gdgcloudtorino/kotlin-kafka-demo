@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-demo-v1
+spec:
+  selector:
+    matchLabels:
+      app: kafka-demo
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: kafka-demo
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: server
+        image: kafka-demo
+        ports:
+        - containerPort: 8080
+        - containerPort: 5005
+        env:
+        - name: PORT
+          value: "8080"
+        - name: JAVA_OPTS
+          value: "-agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n"
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "dev-cluster-kafka-bootstrap.kafka.svc:9092"
+        - name: APP_ESO
+          value: "true"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 180Mi
+          limits:
+            cpu: 300m
+            memory: 300Mi
+        readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 3
+            failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 20
+          timeoutSeconds: 2
+          periodSeconds: 8
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka-demo
+    version: v1
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: kafka-demo-tester
+spec:
+  schedule: "0 0 1 1 *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: stresstest
+              image: kafka-demo-tester
+          env:
+            - name: VUS
+              value: 10
+            - name: ITERATIONS
+              value: 100
+          restartPolicy: OnFailure

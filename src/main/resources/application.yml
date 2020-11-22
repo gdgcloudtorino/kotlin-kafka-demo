@@ -1,0 +1,19 @@
+app:
+  errorRate: 2.0
+  input: input
+  topicA: topicA
+  topicB: topicB
+  eos: ${APP_EOS:true}
+# input -> topicA -> topicB
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      transaction-id-prefix: tx-
+      properties:
+        enable.idempotence: ${APP_EOS:true}
+        transactional.id: tran-id-1
+    consumer:
+      group-id: group-1
+      enable-auto-commit: false
+      isolation-level: read_committed

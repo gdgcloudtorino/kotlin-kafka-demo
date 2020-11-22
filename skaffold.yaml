@@ -1,0 +1,44 @@
+apiVersion: skaffold/v1beta2
+kind: Config
+build:
+  artifacts:
+  # image tags are relative; to specify an image repo (e.g. GCR), you
+  # must provide a "default repo" using one of the methods described
+  # here:
+  # https://skaffold.dev/docs/concepts/#image-repository-handling
+  - image: kafka-demo
+    context: .
+    docker:
+      dockerfile: Dockerfile
+  - image: kafka-demo-tester
+    context: stresstest
+  tagPolicy:
+    gitCommit: {}
+  local:
+    useBuildkit: true
+deploy:
+  kubectl:
+    manifests:
+    - ./kubernetes-manifests/**.yaml
+profiles:
+# "gcb" profile allows building and pushing the images
+# on Google Container Builder without requiring docker
+# installed on the developer machine. However, note that
+# since GCB does not cache the builds, each build will
+# start from scratch and therefore take a long time.
+#
+# This is not used by default. To use it, run:
+#     skaffold run -p gcb
+- name: gcb
+  build:
+    googleCloudBuild:
+      diskSizeGb: 30
+      timeout: 4000s
+
+
+portForward:
+  - resourceType: deployment
+    resourceName: kafka-demo-v1
+#    namespace: mynamespace  #
+    port: 8080 #
+    localPort: 8080 # *Optional*

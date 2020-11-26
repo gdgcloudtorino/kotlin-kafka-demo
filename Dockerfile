@@ -17,17 +17,15 @@ FROM ${BUILD_IMAGE} as builder
 
 WORKDIR /app
 
-COPY ["pom.xml", "mvnw", "./"]
-COPY mvnw mvnw
-RUN chmod +x mvnw
+COPY ["pom.xml", "./"]
 # build all dependencies
-RUN mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # copy your other files
 COPY ./src ./src
 
 # build for release
-RUN mvnw package
+RUN mvn package -DskipTests
 
 FROM ${RUNTIME_IMAGE}
 

@@ -4,7 +4,9 @@ app:
   topicA: topicA
   topicB: topicB
   eos: ${APP_EOS:true}
-# input -> topicA -> topicB
+logging:
+  level:
+    root: INFO
 spring:
   kafka:
     bootstrap-servers: localhost:9092

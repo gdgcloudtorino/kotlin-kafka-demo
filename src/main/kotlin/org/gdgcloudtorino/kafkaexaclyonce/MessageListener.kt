@@ -1,15 +1,14 @@
 package org.gdgcloudtorino.kafkaexaclyonce
 
-import lombok.extern.slf4j.Slf4j
+import org.apache.kafka.clients.producer.RecordMetadata
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.function.ServerRequest
 import org.springframework.web.servlet.function.ServerResponse
-import java.lang.RuntimeException
+import java.util.*
 import kotlin.random.Random
 
 
@@ -28,20 +27,20 @@ class MessageListener(
 
     private val appConfig: AppConfig = appConfig
 
-    fun sendMessage(request: ServerRequest): ServerResponse {
+    fun sendMessage(message: String): RecordMetadata? {
         // ...
-        val body = request.body(String::class.java)
-        log.info("Send message {} to {}",body, appConfig.input )
+        return kafkaTemplate.executeInTransaction {
+            kafkaTemplate.send(appConfig.input, UUID.fromString(message).toString(),message).get().recordMetadata
+        }
 
-        kafkaTemplate.send(appConfig.input, body)
-        return ServerResponse.accepted().build()
     }
 
     @KafkaListener(topics = ["#{'\${app.input}'}"])
     fun process(message: String) {
         log.info("Process: {}", message)
         // invia al topic a
-        kafkaTemplate.send(appConfig.topicA, String.format("Key-A-%s", message), String.format("Notification A: %s", message))
+        kafkaTemplate.send(appConfig.topicA, UUID.fromString(message).toString(),
+                String.format("Notification A: %s", message))
         // impostiamo un error rate generico. se un numero tra 0 e 100 risulta inferiore alla soglia di errore
         if(Random.nextDouble(0.0,100.0) < appConfig.errorRate){
             throw RuntimeException("ERROR TEST")
@@ -53,7 +52,8 @@ class MessageListener(
     fun processB(message: String) {
         log.info("Process: {}", message)
         // invia al topic a
-        kafkaTemplate.send(appConfig.topicB, String.format("Key-B-%s", message), String.format("Notification B: %s", message))
+        kafkaTemplate.send(appConfig.topicB, UUID.fromString(message).toString(),
+                String.format("Notification B: %s", message))
 
     }
 

@@ -1,15 +1,19 @@
 package org.gdgcloudtorino.kafkaexaclyonce
 
+import org.apache.kafka.clients.producer.RecordMetadata
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.function.router
 
-@Configuration
+@RestController
 class MessageRoute(val messageListener: MessageListener) {
 
-    @Bean
-    fun messageRoute() {
-        router { POST("/message", messageListener::sendMessage) }
+    @PostMapping("/message")
+    fun postMessage(@RequestBody message:String): RecordMetadata? {
+        return messageListener.sendMessage(message)
     }
 
 }

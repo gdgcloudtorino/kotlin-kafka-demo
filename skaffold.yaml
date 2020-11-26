@@ -36,9 +36,9 @@ profiles:
       timeout: 4000s
 
 
-portForward:
-  - resourceType: deployment
-    resourceName: kafka-demo-v1
+#portForward:
+#  - resourceType: deployment
+#    resourceName: kafka-demo-v1
 #    namespace: mynamespace  #
-    port: 8080 #
-    localPort: 8080 # *Optional*
+#    port: 8080 #
+#    localPort: 8080 # *Optional*

@@ -24,7 +24,7 @@ spec:
         - name: PORT
           value: "8080"
         - name: JAVA_OPTS
-          value: "-agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n"
+          value: "-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=statemanager,-cprof_service_version=1.0.2,-logtostderr,-minloglevel=2 -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n"
         - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
           value: "dev-cluster-kafka-bootstrap.kafka.svc:9092"
         - name: APP_ESO
@@ -40,18 +40,18 @@ spec:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 60
             timeoutSeconds: 2
             periodSeconds: 3
             failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 20
-          timeoutSeconds: 2
-          periodSeconds: 8
-          failureThreshold: 1
+#        livenessProbe:
+#          httpGet:
+#            path: /health
+#            port: 8080
+#          initialDelaySeconds: 20
+#          timeoutSeconds: 2
+#          periodSeconds: 8
+#          failureThreshold: 1
 ---
 apiVersion: v1
 kind: Service
@@ -80,9 +80,9 @@ spec:
           containers:
             - name: stresstest
               image: kafka-demo-tester
-          env:
-            - name: VUS
-              value: 10
-            - name: ITERATIONS
-              value: 100
+              env:
+                - name: VUS
+                  value: "10"
+                - name: ITERATIONS
+                  value: "100"
           restartPolicy: OnFailure
